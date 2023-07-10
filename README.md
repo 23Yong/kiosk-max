@@ -8,7 +8,7 @@
 
 | <img src="https://avatars.githubusercontent.com/u/41321198?v=4" width="180" height="180"/> | <img src="https://avatars.githubusercontent.com/u/66981851?v=4" width="180" height="180"/> | <img src="https://avatars.githubusercontent.com/u/107015624?v=4" width="180" height="180"/> | <img src="https://avatars.githubusercontent.com/u/118447769?v=4" width="180" height="180"/> | <img src="https://avatars.githubusercontent.com/u/86359180?v=4" width="180" height="180"/> |
 | :---: | :---: | :---: | :---: | :---: |
-| [Jay (FE)](https://github.com/altmit) | [브루니 (BE)](https://github.com/23Yong) | [지구 (BE)](https://github.com/Ojeegu) | [takealook (BE)](https://github.com/takealook97) | [Ape (BE)](https://github.com/crtEvent) |
+| [Jay (FE)](https://github.com/altmit) | [브루니 (BE)](https://github.com/23Yong) | [지구 (BE)](https://github.com/Ojeegu) | [Ape (BE)](https://github.com/crtEvent) |
 
 # 🤝 그라운드 룰
 
