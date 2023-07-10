@@ -1,8 +1,9 @@
 package kr.codesquad.kiosk.orders.controller;
 
+import com.navercorp.fixturemonkey.FixtureMonkey;
+import com.navercorp.fixturemonkey.api.introspector.ConstructorPropertiesArbitraryIntrospector;
 import kr.codesquad.kiosk.exception.BusinessException;
 import kr.codesquad.kiosk.exception.ErrorCode;
-import kr.codesquad.kiosk.fixture.FixtureFactory;
 import kr.codesquad.kiosk.orders.controller.dto.OrderItemResponse;
 import kr.codesquad.kiosk.orders.controller.dto.OrdersResponse;
 import kr.codesquad.kiosk.orders.controller.dto.response.OrderReceiptResponse;
@@ -25,6 +26,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(controllers = OrderController.class)
 class OrderControllerTest {
+	private static final FixtureMonkey sut = FixtureMonkey.builder()
+			.defaultNotNull(Boolean.TRUE)
+			.objectIntrospector(ConstructorPropertiesArbitraryIntrospector.INSTANCE)
+			.build();
+
 	@Autowired
 	private MockMvc mockMvc;
 
@@ -36,8 +42,8 @@ class OrderControllerTest {
 	@Test
 	void whenGetReceipt_thenResponse200OK() throws Exception {
 		// given
-		OrderItemResponse orderItemResponse = FixtureFactory.createOrderItemResponse();
-		OrdersResponse ordersResponse = FixtureFactory.createOrdersResponse();
+		OrderItemResponse orderItemResponse = sut.giveMeOne(OrderItemResponse.class);
+		OrdersResponse ordersResponse = sut.giveMeOne(OrdersResponse.class);
 		given(orderService.getReceipt(anyInt()))
 				.willReturn(OrderReceiptResponse.from(1, List.of(orderItemResponse), ordersResponse));
 

@@ -1,12 +1,14 @@
 package kr.codesquad.kiosk.category.service;
 
+import com.navercorp.fixturemonkey.FixtureMonkey;
+import com.navercorp.fixturemonkey.api.introspector.ConstructorPropertiesArbitraryIntrospector;
+import kr.codesquad.kiosk.category.controller.dto.ItemResponse;
 import kr.codesquad.kiosk.category.controller.dto.response.CategoryItemsResponse;
 import kr.codesquad.kiosk.category.controller.dto.response.CategoryResponse;
 import kr.codesquad.kiosk.category.domain.Category;
 import kr.codesquad.kiosk.category.repository.CategoryRepository;
 import kr.codesquad.kiosk.exception.BusinessException;
 import kr.codesquad.kiosk.exception.ErrorCode;
-import kr.codesquad.kiosk.fixture.FixtureFactory;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,6 +27,11 @@ import static org.mockito.BDDMockito.*;
 @ExtendWith(MockitoExtension.class)
 class CategoryServiceTest {
 
+	private static final FixtureMonkey sut = FixtureMonkey.builder()
+			.defaultNotNull(Boolean.TRUE)
+			.objectIntrospector(ConstructorPropertiesArbitraryIntrospector.INSTANCE)
+			.build();
+
 	@Mock
 	private CategoryRepository categoryRepository;
 
@@ -35,7 +42,7 @@ class CategoryServiceTest {
 	@Test
 	void whenGetAllCategories_thenResponse200OK() {
 		// given
-		List<Category> categories = FixtureFactory.createCategories();
+		List<Category> categories = sut.giveMe(Category.class, 4);
 		given(categoryRepository.findAll()).willReturn(categories);
 
 		// when
@@ -61,7 +68,7 @@ class CategoryServiceTest {
 	@Test
 	void whenGetAllCategories_thenThrowsBusinessException() {
 		// given
-		given(categoryRepository.findAll()).willReturn(FixtureFactory.createEmptyCategories());
+		given(categoryRepository.findAll()).willReturn(List.of());
 
 		// when & then
 		assertAll(
@@ -75,8 +82,10 @@ class CategoryServiceTest {
 	@Test
 	void givenCategoryId_whenGetCategoryItems_thenSuccess() {
 		// given
-		given(categoryRepository.findItemsByCategoryId(anyInt())).willReturn(FixtureFactory.createItemResponses());
-		given(categoryRepository.findTop3ItemsByCategoryId(anyInt())).willReturn(List.of(1, 2, 3));
+		List<ItemResponse> itemResponses = sut.giveMe(ItemResponse.class, 3);
+		given(categoryRepository.findItemsByCategoryId(anyInt())).willReturn(itemResponses);
+		given(categoryRepository.findTop3ItemsByCategoryId(anyInt()))
+				.willReturn(List.of(itemResponses.get(0).getId(), itemResponses.get(1).getId(), itemResponses.get(2).getId()));
 
 		// when
 		CategoryItemsResponse response = categoryService.getCategoryItems(1);

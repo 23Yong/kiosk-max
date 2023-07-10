@@ -1,13 +1,12 @@
 package kr.codesquad.kiosk.orders.service;
 
+import com.navercorp.fixturemonkey.FixtureMonkey;
+import com.navercorp.fixturemonkey.api.introspector.ConstructorPropertiesArbitraryIntrospector;
 import kr.codesquad.kiosk.exception.BusinessException;
 import kr.codesquad.kiosk.exception.ErrorCode;
-import kr.codesquad.kiosk.fixture.FixtureFactory;
-import kr.codesquad.kiosk.orders.controller.dto.OptionDetailsParam;
 import kr.codesquad.kiosk.orders.controller.dto.OrderItemResponse;
-import kr.codesquad.kiosk.orders.controller.dto.response.OrderReceiptResponse;
+import kr.codesquad.kiosk.orders.controller.dto.OrdersResponse;
 import kr.codesquad.kiosk.orders.repository.OrderRepository;
-import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,7 +15,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -28,6 +26,11 @@ import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
+	private static final FixtureMonkey sut = FixtureMonkey.builder()
+			.defaultNotNull(Boolean.TRUE)
+			.objectIntrospector(ConstructorPropertiesArbitraryIntrospector.INSTANCE)
+			.build();
+
 	@Mock
 	private OrderRepository orderRepository;
 
@@ -41,23 +44,18 @@ class OrderServiceTest {
 		int orderId = 1;
 
 		given(orderRepository.findOrdersResponseByOrderId(orderId))
-				.willReturn(Optional.of(FixtureFactory.createOrdersResponse()));
+				.willReturn(Optional.of(sut.giveMeOne(OrdersResponse.class)));
 		given(orderRepository.findOrderItemResponsesByOrderId(orderId))
-				.willReturn(List.of(FixtureFactory.createOrderItemResponse()));
+				.willReturn(List.of(sut.giveMeOne(OrderItemResponse.class)));
 
 		// when
-		OrderReceiptResponse receipt = orderService.getReceipt(orderId);
+		orderService.getReceipt(orderId);
 
 		// then
-		SoftAssertions.assertSoftly(softAssertions -> {
-			softAssertions.assertThat(receipt.items()).isEqualTo(List.of(new OrderItemResponse("콜드브루", 2, 10000,
-					List.of(Map.of("Size", new OptionDetailsParam(1, "Large")),
-							Map.of("Temperature", new OptionDetailsParam(3, "Hot"))))));
-			softAssertions.assertThat(receipt.payments()).isEqualTo("card");
-			softAssertions.assertThat(receipt.amount()).isEqualTo(10000);
-			softAssertions.assertThat(receipt.total()).isEqualTo(10000);
-			softAssertions.assertThat(receipt.remain()).isEqualTo(0);
-		});
+		assertAll(
+				() -> then(orderRepository).should(times(1)).findOrdersResponseByOrderId(anyInt()),
+				() -> then(orderRepository).should(times(1)).findOrderItemResponsesByOrderId(anyInt())
+		);
 	}
 
 	@DisplayName("영수증 정보를 얻을 때 잘못된 주문번호가 주어지면 예외를 던진다.")

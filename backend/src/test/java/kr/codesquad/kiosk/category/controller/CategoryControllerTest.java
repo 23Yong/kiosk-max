@@ -1,10 +1,14 @@
 package kr.codesquad.kiosk.category.controller;
 
+import com.navercorp.fixturemonkey.FixtureMonkey;
+import com.navercorp.fixturemonkey.api.introspector.ConstructorPropertiesArbitraryIntrospector;
+import kr.codesquad.kiosk.category.controller.dto.ItemResponse;
+import kr.codesquad.kiosk.category.controller.dto.response.CategoryItemsResponse;
 import kr.codesquad.kiosk.category.controller.dto.response.CategoryResponse;
 import kr.codesquad.kiosk.category.service.CategoryService;
 import kr.codesquad.kiosk.exception.BusinessException;
 import kr.codesquad.kiosk.exception.ErrorCode;
-import kr.codesquad.kiosk.fixture.FixtureFactory;
+import net.jqwik.api.Arbitraries;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +30,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(controllers = CategoryController.class)
 class CategoryControllerTest {
 
+	private static final FixtureMonkey sut = FixtureMonkey.builder()
+			.defaultNotNull(Boolean.TRUE)
+			.objectIntrospector(ConstructorPropertiesArbitraryIntrospector.INSTANCE)
+			.build();
+
 	@Autowired
 	MockMvc mockMvc;
 
@@ -36,7 +45,7 @@ class CategoryControllerTest {
 	@Test
 	void whenGetAllCategories_thenResponse200OK() throws Exception {
 		// given
-		List<CategoryResponse> response = FixtureFactory.createCategoriesResponse();
+		List<CategoryResponse> response = sut.giveMe(CategoryResponse.class, 3);
 		when(categoryService.getAllCategories()).thenReturn(response);
 
 		// when & then
@@ -48,7 +57,8 @@ class CategoryControllerTest {
 				.andExpect(jsonPath("$[*].id")
 						.value(hasItems(response.stream().map(CategoryResponse::id).toArray())))
 				.andExpect(jsonPath("$[*].name")
-						.value(hasItems(response.stream().map(CategoryResponse::name).toArray())));
+						.value(hasItems(response.stream().map(CategoryResponse::name).toArray())))
+				.andDo(print());
 	}
 
 	@DisplayName("카테고리 항목을 불러오지 못하면 500 Connection Error를 반환한다.")
@@ -70,20 +80,26 @@ class CategoryControllerTest {
 	@Test
 	void whenGetCategoryItems_thenResponse200OK() throws Exception {
 		// given
-		given(categoryService.getCategoryItems(anyInt())).willReturn(FixtureFactory.createCategoryItemsResponse());
+		int categoryId = 1;
+		CategoryItemsResponse response = sut.giveMeBuilder(CategoryItemsResponse.class)
+				.set("id", categoryId)
+				.set("items[*]", Arbitraries.create(() -> sut.giveMeOne(ItemResponse.class)))
+				.sample();
+		given(categoryService.getCategoryItems(categoryId)).willReturn(response);
 
 		// when & then
 		mockMvc.perform(
 						get("/api/categories/1")
 				)
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.id").value(1))
+				.andExpect(jsonPath("$.id").value(categoryId))
 				.andExpect(jsonPath("$.items").exists())
 				.andExpect(jsonPath("$['items'][*]['id']").exists())
 				.andExpect(jsonPath("$['items'][*]['name']").exists())
 				.andExpect(jsonPath("$['items'][*]['price']").exists())
 				.andExpect(jsonPath("$['items'][*]['isSignature']").exists())
-				.andExpect(jsonPath("$['items'][*]['image']").exists());
+				.andExpect(jsonPath("$['items'][*]['image']").exists())
+				.andDo(print());
 	}
 
 	@DisplayName("카테고리 항목을 불러오지 못하면 404 NOT_FOUND를 반환한다.")
